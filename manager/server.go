@@ -19,6 +19,7 @@ func (m *manager) StartListening(address, currentNodeDomain string) error {
 
 	public := http.NewServeMux()
 	public.HandleFunc(getCACert, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
 
 		f, err := os.Open(filepath.Join(m.storageDir, CACertFileName))
 		if err != nil {
@@ -37,6 +38,7 @@ func (m *manager) StartListening(address, currentNodeDomain string) error {
 	private.HandleFunc(getCAPrivateKey, func(w http.ResponseWriter, r *http.Request) {
 
 		log.Println("new cluster joiner", r.RemoteAddr, "is downloading CA private key")
+		w.Header().Set("Content-Type", "text/plain")
 
 		f, err := os.Open(filepath.Join(m.storageDir, CAKeyFileName))
 		if err != nil {
@@ -49,9 +51,7 @@ func (m *manager) StartListening(address, currentNodeDomain string) error {
 		io.Copy(w, f)
 	})
 
-	private.HandleFunc(getAdditionals, func(w http.ResponseWriter, r *http.Request) {
-		http.NotFound(w, r)
-	})
+	private.HandleFunc(getAdditionals, m.serveAdditionals)
 
 	rootMux.Handle("/private/", m.basicAuthorisation(private))
 

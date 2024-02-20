@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -145,5 +146,48 @@ func (m *manager) Join(address, token string) error {
 
 	f.Close()
 
-	return createOrLoadCerts(m.storageDir, tokenStruct.Domain)
+	if err := createOrLoadCerts(m.storageDir, tokenStruct.Domain); err != nil {
+		return err
+	}
+
+	// Do additionals
+
+	m.RLock()
+	defer m.RUnlock()
+
+	httpsURL.Path = filepath.Join(originalURLPath, getAdditionals)
+	req, err = http.NewRequest(http.MethodGet, httpsURL.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set(AuthHeader, tokenStruct.JoinPassword)
+
+	res, err = client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		response, err := io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("read all error bytes failed: %s", err)
+		}
+
+		return errors.New("server returned error fetching additionals:" + string(response))
+	}
+
+	err = json.NewDecoder(res.Body).Decode(&m.additionals)
+	if err != nil {
+		return err
+	}
+
+	for name, data := range m.additionals {
+		if fnc, ok := m.additionalsHandlers[name]; ok {
+			go fnc(name, data)
+		}
+	}
+
+	return nil
 }
