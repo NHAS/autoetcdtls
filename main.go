@@ -11,7 +11,9 @@ import (
 )
 
 func main() {
-	err := manager.StartListening(":4433", "localhost", "certs")
+
+	firstMember := manager.NewManager("certs")
+	err := firstMember.StartListening(":4433", "localhost")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -25,7 +27,9 @@ func main() {
 
 	log.Println("join token: ", token)
 
-	err = manager.Connect("https://localhost:4433", token, "mock")
+	secondMember := manager.NewManager("mock")
+
+	err = secondMember.Join("https://localhost:4433", token)
 	if err != nil {
 		log.Fatal(err)
 	}

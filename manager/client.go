@@ -16,7 +16,7 @@ import (
 	"path/filepath"
 )
 
-func Connect(address, token, storagePath string) error {
+func (m *manager) Join(address, token string) error {
 
 	tokenStruct, err := parseToken(token)
 	if err != nil {
@@ -66,14 +66,14 @@ func Connect(address, token, storagePath string) error {
 		return errors.New("server returned error fetching ca: " + string(response))
 	}
 
-	err = os.MkdirAll(storagePath, 0700)
+	err = os.MkdirAll(m.storageDir, 0700)
 	if err != nil {
 		return fmt.Errorf("unable to create certificate storage path: %s", err)
 	}
 
 	hasher := sha512.New()
 
-	f, err := os.Create(filepath.Join(storagePath, CACertFileName))
+	f, err := os.Create(filepath.Join(m.storageDir, CACertFileName))
 	if err != nil {
 		return fmt.Errorf("unable to create file for ca cert: %s", err)
 	}
@@ -133,7 +133,7 @@ func Connect(address, token, storagePath string) error {
 		return errors.New("server returned error fetching ca key:" + string(response))
 	}
 
-	f, err = os.Create(filepath.Join(storagePath, CAKeyFileName))
+	f, err = os.Create(filepath.Join(m.storageDir, CAKeyFileName))
 	if err != nil {
 		return fmt.Errorf("unable to create file for ca key: %s", err)
 	}
@@ -145,5 +145,5 @@ func Connect(address, token, storagePath string) error {
 
 	f.Close()
 
-	return createOrLoadCerts(storagePath, tokenStruct.Domain)
+	return createOrLoadCerts(m.storageDir, tokenStruct.Domain)
 }

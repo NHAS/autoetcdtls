@@ -9,9 +9,8 @@ import (
 	"path/filepath"
 )
 
-func StartListening(address, currentNodeDomain, storagePath string) error {
-
-	err := createOrLoadCerts(storagePath, currentNodeDomain)
+func (m *manager) StartListening(address, currentNodeDomain string) error {
+	err := createOrLoadCerts(m.storageDir, currentNodeDomain)
 	if err != nil {
 		return err
 	}
@@ -21,7 +20,7 @@ func StartListening(address, currentNodeDomain, storagePath string) error {
 	public := http.NewServeMux()
 	public.HandleFunc(getCACert, func(w http.ResponseWriter, r *http.Request) {
 
-		f, err := os.Open(filepath.Join(storagePath, CACertFileName))
+		f, err := os.Open(filepath.Join(m.storageDir, CACertFileName))
 		if err != nil {
 			log.Println("failed to serve cluster CA certificate: ", err)
 			http.Error(w, "Server Error", http.StatusInternalServerError)
@@ -39,7 +38,7 @@ func StartListening(address, currentNodeDomain, storagePath string) error {
 
 		log.Println("new cluster joiner", r.RemoteAddr, "is downloading CA private key")
 
-		f, err := os.Open(filepath.Join(storagePath, CAKeyFileName))
+		f, err := os.Open(filepath.Join(m.storageDir, CAKeyFileName))
 		if err != nil {
 			log.Println("failed to serve cluster CA private key: ", err)
 			http.Error(w, "Server Error", http.StatusInternalServerError)
@@ -63,7 +62,7 @@ func StartListening(address, currentNodeDomain, storagePath string) error {
 
 	go func() {
 		log.Println("Started tls serving on: ", address)
-		err := http.ServeTLS(listener, rootMux, filepath.Join(storagePath, PeerCertFileName), filepath.Join(storagePath, PeerKeyFileName))
+		err := http.ServeTLS(listener, rootMux, filepath.Join(m.storageDir, PeerCertFileName), filepath.Join(m.storageDir, PeerKeyFileName))
 		if err != nil {
 			log.Println("Manager TLS crashed: ", err)
 		}
