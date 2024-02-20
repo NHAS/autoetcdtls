@@ -6,13 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
-)
-
-var (
-	lc       sync.RWMutex
-	sessions = map[string]*time.Timer{}
 )
 
 type Token struct {
@@ -37,29 +31,29 @@ func parseToken(token string) (Token, error) {
 	return t, err
 }
 
-func isTokenValid(joinPassword string) bool {
-	lc.RLock()
-	defer lc.RUnlock()
-	_, ok := sessions[joinPassword]
+func (m *manager) isTokenValid(joinPassword string) bool {
+	m.RLock()
+	defer m.RUnlock()
+	_, ok := m.sessions[joinPassword]
 	return ok
 }
 
-func CreateToken(certificateStorage, domain string) (string, error) {
-	lc.Lock()
-	defer lc.Unlock()
+func (m *manager) CreateToken(domain string) (string, error) {
+	m.Lock()
+	defer m.Unlock()
 
 	var t Token
 	t.Domain = domain
 	for {
 		t.JoinPassword = generateRandom(32)
 
-		if _, ok := sessions[t.JoinPassword]; ok {
+		if _, ok := m.sessions[t.JoinPassword]; ok {
 			continue
 		}
 
 		break
 	}
-	certBytes, err := os.ReadFile(filepath.Join(certificateStorage, CACertFileName))
+	certBytes, err := os.ReadFile(filepath.Join(m.storageDir, CACertFileName))
 	if err != nil {
 		return "", err
 	}
@@ -68,11 +62,11 @@ func CreateToken(certificateStorage, domain string) (string, error) {
 
 	t.CACertHash = base64.RawURLEncoding.EncodeToString(hashResult[:])
 
-	sessions[t.JoinPassword] = time.AfterFunc(30*time.Second, func() {
-		lc.Lock()
-		defer lc.Unlock()
+	m.sessions[t.JoinPassword] = time.AfterFunc(30*time.Second, func() {
+		m.Lock()
+		defer m.Unlock()
 
-		delete(sessions, t.JoinPassword)
+		delete(m.sessions, t.JoinPassword)
 	})
 
 	b, err := json.Marshal(t)

@@ -20,7 +20,7 @@ func main() {
 
 	fmt.Println("Blocking, press ctrl+c to continue...")
 
-	token, err := manager.CreateToken("certs", "localhost")
+	token, err := firstMember.CreateToken("localhost")
 	if err != nil {
 		log.Fatal("making token: ", err)
 	}

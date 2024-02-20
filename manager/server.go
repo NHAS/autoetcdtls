@@ -53,7 +53,7 @@ func (m *manager) StartListening(address, currentNodeDomain string) error {
 		http.NotFound(w, r)
 	})
 
-	rootMux.Handle("/private/", basicAuthorisation(private))
+	rootMux.Handle("/private/", m.basicAuthorisation(private))
 
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
@@ -71,10 +71,10 @@ func (m *manager) StartListening(address, currentNodeDomain string) error {
 	return nil
 }
 
-func basicAuthorisation(next http.Handler) http.Handler {
+func (m *manager) basicAuthorisation(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		if !isTokenValid(r.Header.Get(AuthHeader)) {
+		if !m.isTokenValid(r.Header.Get(AuthHeader)) {
 			http.NotFound(w, r)
 			return
 		}
