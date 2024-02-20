@@ -3,9 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/NHAS/autoetcdtls/manager"
 )
@@ -36,8 +33,4 @@ func main() {
 
 	log.Println("Done!")
 
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
-
-	<-done
 }
