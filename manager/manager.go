@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/url"
 	"sync"
-	"time"
 )
 
 type Manager struct {
@@ -13,10 +12,7 @@ type Manager struct {
 	storageDir string
 	domain     string
 
-	sessions map[string]*time.Timer
-
-	// On serve, we serve these additional extra bits of data
-	additionals map[string]string
+	sessions map[string]*ActiveToken
 
 	// On sync/join we get data through these function handlers
 	additionalsHandlers map[string]func(string, string)
@@ -57,8 +53,7 @@ func createEmptyManager(storageDir, urlAddress string) (*Manager, error) {
 		storageDir:          storageDir,
 		domain:              urlAddress,
 		listenAddress:       u.Host,
-		sessions:            make(map[string]*time.Timer),
-		additionals:         make(map[string]string),
+		sessions:            make(map[string]*ActiveToken),
 		additionalsHandlers: make(map[string]func(string, string)),
 	}, nil
 }

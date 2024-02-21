@@ -20,7 +20,7 @@ import (
 // Join connects an instance to existing clusters
 // It gets the CA cert and private key, along with any additional configurations that are required
 // This is done with a base64 encoded json blob called a "Join token"
-func Join(token, certStorage string, additionals map[string]func(name string, data string)) (*Manager, error) {
+func Join(token, certStorage string, additionalsHandlers map[string]func(name string, data string)) (*Manager, error) {
 
 	tokenStruct, err := parseToken(token)
 	if err != nil {
@@ -32,7 +32,7 @@ func Join(token, certStorage string, additionals map[string]func(name string, da
 		return nil, err
 	}
 
-	for name, fnc := range additionals {
+	for name, fnc := range additionalsHandlers {
 		err := m.HandleAdditonal(name, fnc)
 		if err != nil {
 			return nil, err
@@ -192,12 +192,14 @@ func Join(token, certStorage string, additionals map[string]func(name string, da
 		return nil, errors.New("server returned error fetching additionals:" + string(response))
 	}
 
-	err = json.NewDecoder(res.Body).Decode(&m.additionals)
+	additionals := map[string]string{}
+
+	err = json.NewDecoder(res.Body).Decode(&additionals)
 	if err != nil {
 		return nil, err
 	}
 
-	for name, data := range m.additionals {
+	for name, data := range additionals {
 		if fnc, ok := m.additionalsHandlers[name]; ok {
 			go fnc(name, data)
 		}

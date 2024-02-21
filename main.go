@@ -20,8 +20,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	firstMember.SetAdditional("fronk", "bonk")
-
 	fmt.Println("Blocking, press ctrl+c to continue...")
 
 	token, err := firstMember.CreateToken("https://localhost:4444")
@@ -29,9 +27,11 @@ func main() {
 		log.Fatal("making token: ", err)
 	}
 
+	token.SetAdditional("fronk", "bonk")
+
 	log.Println("join token: ", token)
 
-	_, err = manager.Join(token, "mock", map[string]func(name string, data string){
+	_, err = manager.Join(token.Token, "mock", map[string]func(name string, data string){
 		"fronk": func(name, data string) {
 			log.Println("got additional data: ", name, data)
 		},

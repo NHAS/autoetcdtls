@@ -41,7 +41,7 @@ func (m *Manager) isTokenValid(joinPassword string) bool {
 
 // CreateToken builds a new join token with temporary joining password from an existing and connected manager.
 // newNodeUrl is where the node will be accessible from (and where the instance will listen on when it starts its server component)
-func (m *Manager) CreateToken(newNodeUrl string) (string, error) {
+func (m *Manager) CreateToken(newNodeUrl string) (*ActiveToken, error) {
 	m.Lock()
 	defer m.Unlock()
 
@@ -59,21 +59,25 @@ func (m *Manager) CreateToken(newNodeUrl string) (string, error) {
 	}
 	certBytes, err := os.ReadFile(filepath.Join(m.storageDir, CACertFileName))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	hashResult := sha512.Sum512(certBytes)
 
 	t.CACertHash = base64.RawURLEncoding.EncodeToString(hashResult[:])
 
-	m.sessions[t.JoinPassword] = time.AfterFunc(30*time.Second, func() {
-		m.Lock()
-		defer m.Unlock()
-
-		delete(m.sessions, t.JoinPassword)
-	})
-
 	b, err := json.Marshal(t)
 
-	return base64.RawURLEncoding.EncodeToString(b), err
+	m.sessions[t.JoinPassword] = &ActiveToken{
+		timer: time.AfterFunc(30*time.Second, func() {
+			m.Lock()
+			defer m.Unlock()
+
+			delete(m.sessions, t.JoinPassword)
+		}),
+		additionals: make(map[string]string),
+		Token:       base64.RawURLEncoding.EncodeToString(b),
+	}
+
+	return m.sessions[t.JoinPassword], err
 }
