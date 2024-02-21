@@ -205,7 +205,7 @@ func Join(token, certStorage string, additionalsHandlers map[string]func(name st
 		}
 	}
 
-	err = m.StartListening()
+	err = m.startListening()
 	if err != nil {
 		return nil, err
 	}

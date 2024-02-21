@@ -25,10 +25,6 @@ func (m *Manager) GetCACertPath() string {
 	return filepath.Join(m.storageDir, CACertFileName)
 }
 
-func (m *Manager) GetCAKeyPath() string {
-	return filepath.Join(m.storageDir, CAKeyFileName)
-}
-
 func (m *Manager) GetPeerCertPath() string {
 	return filepath.Join(m.storageDir, PeerCertFileName)
 }
@@ -47,7 +43,12 @@ func New(certStore, urlAddress string) (*Manager, error) {
 		return nil, err
 	}
 
-	return createEmptyManager(certStore, urlAddress)
+	m, err := createEmptyManager(certStore, urlAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, m.startListening()
 }
 
 // createEmptyManager just checks the url is https, and creates an empty manager object

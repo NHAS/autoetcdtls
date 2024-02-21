@@ -10,12 +10,7 @@ import (
 
 func main() {
 
-	firstMember, err := manager.New("certs", "https://localhost:4433")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = firstMember.StartListening()
+	firstMember, err := manager.New("certs", "https://localhost:4434")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -29,7 +24,7 @@ func main() {
 
 	token.SetAdditional("fronk", "bonk")
 
-	log.Println("join token: ", token)
+	log.Println("join token: ", token.Token)
 
 	_, err = manager.Join(token.Token, "mock", map[string]func(name string, data string){
 		"fronk": func(name, data string) {
