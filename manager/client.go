@@ -166,7 +166,6 @@ func Join(token, certStorage string, additionals map[string]func(name string, da
 	}
 
 	// Do additionals
-
 	m.RLock()
 	defer m.RUnlock()
 
@@ -204,5 +203,9 @@ func Join(token, certStorage string, additionals map[string]func(name string, da
 		}
 	}
 
+	err = m.StartListening()
+	if err != nil {
+		return nil, err
+	}
 	return m, nil
 }
