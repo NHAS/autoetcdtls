@@ -4,7 +4,6 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/json"
-	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -75,8 +74,6 @@ func (m *manager) CreateToken(newNodeUrl string) (string, error) {
 	})
 
 	b, err := json.Marshal(t)
-
-	log.Println(string(b))
 
 	return base64.RawURLEncoding.EncodeToString(b), err
 }

@@ -42,6 +42,6 @@ func main() {
 
 	log.Println("Done!")
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(35 * time.Second)
 
 }
