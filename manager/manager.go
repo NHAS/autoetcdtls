@@ -3,6 +3,7 @@ package manager
 import (
 	"errors"
 	"net/url"
+	"path/filepath"
 	"sync"
 )
 
@@ -18,6 +19,22 @@ type Manager struct {
 	additionalsHandlers map[string]func(string, string)
 
 	listenAddress string
+}
+
+func (m *Manager) GetCACertPath() string {
+	return filepath.Join(m.storageDir, CACertFileName)
+}
+
+func (m *Manager) GetCAKeyPath() string {
+	return filepath.Join(m.storageDir, CAKeyFileName)
+}
+
+func (m *Manager) GetPeerCertPath() string {
+	return filepath.Join(m.storageDir, PeerCertFileName)
+}
+
+func (m *Manager) GetPeerKeyPath() string {
+	return filepath.Join(m.storageDir, PeerKeyFileName)
 }
 
 // New creates a webserver that syncs cluster certificates, provided it is either the first node, or it has "Joined" the cluster previously
