@@ -9,11 +9,7 @@ import (
 	"path/filepath"
 )
 
-func (m *manager) StartListening(address, currentNodeDomain string) error {
-	err := createOrLoadCerts(m.storageDir, currentNodeDomain)
-	if err != nil {
-		return err
-	}
+func (m *manager) StartListening() error {
 
 	rootMux := http.NewServeMux()
 
@@ -55,13 +51,13 @@ func (m *manager) StartListening(address, currentNodeDomain string) error {
 
 	rootMux.Handle("/private/", m.basicAuthorisation(private))
 
-	listener, err := net.Listen("tcp", address)
+	listener, err := net.Listen("tcp", m.listenAddress)
 	if err != nil {
 		return err
 	}
 
 	go func() {
-		log.Println("Started tls serving on: ", address)
+		log.Println("Started tls serving on: ", m.listenAddress)
 		err := http.ServeTLS(listener, rootMux, filepath.Join(m.storageDir, PeerCertFileName), filepath.Join(m.storageDir, PeerKeyFileName))
 		if err != nil {
 			log.Println("Manager TLS crashed: ", err)

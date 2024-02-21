@@ -10,8 +10,12 @@ import (
 
 func main() {
 
-	firstMember := manager.New("certs")
-	err := firstMember.StartListening(":4433", "localhost")
+	firstMember, err := manager.New("certs", "https://localhost:4433")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = firstMember.StartListening()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -20,20 +24,18 @@ func main() {
 
 	fmt.Println("Blocking, press ctrl+c to continue...")
 
-	token, err := firstMember.CreateToken("localhost")
+	token, err := firstMember.CreateToken("https://localhost:4444")
 	if err != nil {
 		log.Fatal("making token: ", err)
 	}
 
 	log.Println("join token: ", token)
 
-	secondMember := manager.New("mock")
-
-	secondMember.HandleAdditonal("fronk", func(name, data string) {
-		log.Println("Got additional data: ", name, data)
+	_, err = manager.Join(token, "mock", map[string]func(name string, data string){
+		"fronk": func(name, data string) {
+			log.Println("got additional data: ", name, data)
+		},
 	})
-
-	err = secondMember.Join("https://localhost:4433", token)
 	if err != nil {
 		log.Fatal(err)
 	}

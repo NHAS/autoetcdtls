@@ -4,15 +4,17 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/json"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
 )
 
 type Token struct {
-	Domain       string `json:"d"`
-	JoinPassword string `json:"p"`
-	CACertHash   string `json:"h"`
+	NewPeerURL      string `json:"d"`
+	ExistingPeerURL string `json:"peer"`
+	JoinPassword    string `json:"p"`
+	CACertHash      string `json:"h"`
 }
 
 func parseToken(token string) (Token, error) {
@@ -38,12 +40,13 @@ func (m *manager) isTokenValid(joinPassword string) bool {
 	return ok
 }
 
-func (m *manager) CreateToken(domain string) (string, error) {
+func (m *manager) CreateToken(newNodeUrl string) (string, error) {
 	m.Lock()
 	defer m.Unlock()
 
 	var t Token
-	t.Domain = domain
+	t.ExistingPeerURL = m.domain
+	t.NewPeerURL = newNodeUrl
 	for {
 		t.JoinPassword = generateRandom(32)
 
@@ -70,6 +73,8 @@ func (m *manager) CreateToken(domain string) (string, error) {
 	})
 
 	b, err := json.Marshal(t)
+
+	log.Println(string(b))
 
 	return base64.RawURLEncoding.EncodeToString(b), err
 }

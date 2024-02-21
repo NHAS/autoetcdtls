@@ -17,16 +17,28 @@ import (
 	"path/filepath"
 )
 
-func (m *manager) Join(address, token string) error {
+func Join(token, certStorage string, additionals map[string]func(name string, data string)) (*manager, error) {
 
 	tokenStruct, err := parseToken(token)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	httpsURL, err := url.Parse(address)
+	m, err := createEmptyManager(certStorage, tokenStruct.NewPeerURL)
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	for name, fnc := range additionals {
+		err := m.HandleAdditonal(name, fnc)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	httpsURL, err := url.Parse(tokenStruct.ExistingPeerURL)
+	if err != nil {
+		return nil, err
 	}
 
 	if httpsURL.Scheme == "" {
@@ -34,7 +46,7 @@ func (m *manager) Join(address, token string) error {
 	}
 
 	if httpsURL.Scheme != "https" {
-		return errors.New("address url scheme is not supported: " + httpsURL.Scheme)
+		return nil, errors.New("address url scheme is not supported: " + httpsURL.Scheme)
 	}
 
 	originalURLPath := httpsURL.Path
@@ -49,41 +61,41 @@ func (m *manager) Join(address, token string) error {
 	}
 	req, err := http.NewRequest(http.MethodGet, httpsURL.String(), nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	res, err := client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
 		response, err := io.ReadAll(res.Body)
 		if err != nil {
-			return fmt.Errorf("read all error bytes failed: %s", err)
+			return nil, fmt.Errorf("read all error bytes failed: %s", err)
 		}
 
-		return errors.New("server returned error fetching ca: " + string(response))
+		return nil, errors.New("server returned error fetching ca: " + string(response))
 	}
 
 	err = os.MkdirAll(m.storageDir, 0700)
 	if err != nil {
-		return fmt.Errorf("unable to create certificate storage path: %s", err)
+		return nil, fmt.Errorf("unable to create certificate storage path: %s", err)
 	}
 
 	hasher := sha512.New()
 
 	f, err := os.Create(filepath.Join(m.storageDir, CACertFileName))
 	if err != nil {
-		return fmt.Errorf("unable to create file for ca cert: %s", err)
+		return nil, fmt.Errorf("unable to create file for ca cert: %s", err)
 	}
 
 	caPEM := bytes.NewBuffer(nil)
 
 	_, err = io.Copy(io.MultiWriter(hasher, f, caPEM), res.Body)
 	if err != nil {
-		return fmt.Errorf("failed to copy ca cert: %s", err)
+		return nil, fmt.Errorf("failed to copy ca cert: %s", err)
 	}
 
 	f.Close()
@@ -91,17 +103,17 @@ func (m *manager) Join(address, token string) error {
 	hash := hasher.Sum(nil)
 	expectedHash, err := base64.RawURLEncoding.DecodeString(tokenStruct.CACertHash)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if subtle.ConstantTimeCompare(hash, expectedHash) == 0 {
-		return errors.New("ca cert bundle did not match token")
+		return nil, errors.New("ca cert bundle did not match token")
 	}
 
 	certpool := x509.NewCertPool()
 	ok := certpool.AppendCertsFromPEM(caPEM.Bytes())
 	if !ok {
-		return errors.New("unable to add ca to cert pool")
+		return nil, errors.New("unable to add ca to cert pool")
 	}
 
 	client.Transport = &http.Transport{
@@ -114,40 +126,40 @@ func (m *manager) Join(address, token string) error {
 	httpsURL.Path = filepath.Join(originalURLPath, getCAPrivateKey)
 	req, err = http.NewRequest(http.MethodGet, httpsURL.String(), nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req.Header.Set(AuthHeader, tokenStruct.JoinPassword)
 
 	res, err = client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
 		response, err := io.ReadAll(res.Body)
 		if err != nil {
-			return fmt.Errorf("read all error bytes failed: %s", err)
+			return nil, fmt.Errorf("read all error bytes failed: %s", err)
 		}
 
-		return errors.New("server returned error fetching ca key:" + string(response))
+		return nil, errors.New("server returned error fetching ca key:" + string(response))
 	}
 
 	f, err = os.Create(filepath.Join(m.storageDir, CAKeyFileName))
 	if err != nil {
-		return fmt.Errorf("unable to create file for ca key: %s", err)
+		return nil, fmt.Errorf("unable to create file for ca key: %s", err)
 	}
 
 	_, err = io.Copy(f, res.Body)
 	if err != nil {
-		return fmt.Errorf("failed to copy ca key: %s", err)
+		return nil, fmt.Errorf("failed to copy ca key: %s", err)
 	}
 
 	f.Close()
 
-	if err := createOrLoadCerts(m.storageDir, tokenStruct.Domain); err != nil {
-		return err
+	if err := createOrLoadCerts(m.storageDir, tokenStruct.NewPeerURL); err != nil {
+		return nil, err
 	}
 
 	// Do additionals
@@ -158,29 +170,29 @@ func (m *manager) Join(address, token string) error {
 	httpsURL.Path = filepath.Join(originalURLPath, getAdditionals)
 	req, err = http.NewRequest(http.MethodGet, httpsURL.String(), nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req.Header.Set(AuthHeader, tokenStruct.JoinPassword)
 
 	res, err = client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
 		response, err := io.ReadAll(res.Body)
 		if err != nil {
-			return fmt.Errorf("read all error bytes failed: %s", err)
+			return nil, fmt.Errorf("read all error bytes failed: %s", err)
 		}
 
-		return errors.New("server returned error fetching additionals:" + string(response))
+		return nil, errors.New("server returned error fetching additionals:" + string(response))
 	}
 
 	err = json.NewDecoder(res.Body).Decode(&m.additionals)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for name, data := range m.additionals {
@@ -189,5 +201,5 @@ func (m *manager) Join(address, token string) error {
 		}
 	}
 
-	return nil
+	return m, nil
 }
