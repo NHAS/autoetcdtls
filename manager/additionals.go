@@ -7,6 +7,7 @@ import (
 	"net/http"
 )
 
+// SetAdditional adds more configuration data, this should be used for basic information only as large data will struggle to be json marshalled
 func (m *manager) SetAdditional(name, data string) {
 	m.Lock()
 	defer m.Unlock()
@@ -15,6 +16,7 @@ func (m *manager) SetAdditional(name, data string) {
 	m.additionals[name] = data
 }
 
+// HandleAdditional registers a function to listen when connecting via "Join" if one of the additionals matches then it executes a function with the extra config data
 func (m *manager) HandleAdditonal(name string, fnc func(name, data string)) error {
 	m.Lock()
 	defer m.Unlock()

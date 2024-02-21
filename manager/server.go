@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 )
 
+// StartListening executes the TLS http server which has the api for providing a CA cert and configuration data to new clients
 func (m *manager) StartListening() error {
 
 	rootMux := http.NewServeMux()

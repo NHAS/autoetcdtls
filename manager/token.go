@@ -40,6 +40,8 @@ func (m *manager) isTokenValid(joinPassword string) bool {
 	return ok
 }
 
+// CreateToken builds a new join token with temporary joining password from an existing and connected manager.
+// newNodeUrl is where the node will be accessible from (and where the instance will listen on when it starts its server component)
 func (m *manager) CreateToken(newNodeUrl string) (string, error) {
 	m.Lock()
 	defer m.Unlock()
