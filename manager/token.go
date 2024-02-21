@@ -32,7 +32,7 @@ func parseToken(token string) (Token, error) {
 	return t, err
 }
 
-func (m *manager) isTokenValid(joinPassword string) bool {
+func (m *Manager) isTokenValid(joinPassword string) bool {
 	m.RLock()
 	defer m.RUnlock()
 	_, ok := m.sessions[joinPassword]
@@ -41,7 +41,7 @@ func (m *manager) isTokenValid(joinPassword string) bool {
 
 // CreateToken builds a new join token with temporary joining password from an existing and connected manager.
 // newNodeUrl is where the node will be accessible from (and where the instance will listen on when it starts its server component)
-func (m *manager) CreateToken(newNodeUrl string) (string, error) {
+func (m *Manager) CreateToken(newNodeUrl string) (string, error) {
 	m.Lock()
 	defer m.Unlock()
 

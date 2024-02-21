@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type manager struct {
+type Manager struct {
 	sync.RWMutex
 
 	storageDir string
@@ -27,7 +27,7 @@ type manager struct {
 // New creates a webserver that syncs cluster certificates, provided it is either the first node, or it has "Joined" the cluster previously
 // certStore is a path to where the certificates will be stored if they are generated, or where it will attempt to load the certs from
 // urlAddress is where the server listens to, and its publicly accessible address
-func New(certStore, urlAddress string) (*manager, error) {
+func New(certStore, urlAddress string) (*Manager, error) {
 
 	err := createOrLoadCerts(certStore, urlAddress)
 	if err != nil {
@@ -38,7 +38,7 @@ func New(certStore, urlAddress string) (*manager, error) {
 }
 
 // createEmptyManager just checks the url is https, and creates an empty manager object
-func createEmptyManager(storageDir, urlAddress string) (*manager, error) {
+func createEmptyManager(storageDir, urlAddress string) (*Manager, error) {
 
 	u, err := url.Parse(urlAddress)
 	if err != nil {
@@ -53,7 +53,7 @@ func createEmptyManager(storageDir, urlAddress string) (*manager, error) {
 		u.Host += ":443"
 	}
 
-	return &manager{
+	return &Manager{
 		storageDir:          storageDir,
 		domain:              urlAddress,
 		listenAddress:       u.Host,

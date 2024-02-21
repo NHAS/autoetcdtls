@@ -10,7 +10,7 @@ import (
 )
 
 // StartListening executes the TLS http server which has the api for providing a CA cert and configuration data to new clients
-func (m *manager) StartListening() error {
+func (m *Manager) StartListening() error {
 
 	rootMux := http.NewServeMux()
 
@@ -68,7 +68,7 @@ func (m *manager) StartListening() error {
 	return nil
 }
 
-func (m *manager) basicAuthorisation(next http.Handler) http.Handler {
+func (m *Manager) basicAuthorisation(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		if !m.isTokenValid(r.Header.Get(AuthHeader)) {

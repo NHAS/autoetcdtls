@@ -20,7 +20,7 @@ import (
 // Join connects an instance to existing clusters
 // It gets the CA cert and private key, along with any additional configurations that are required
 // This is done with a base64 encoded json blob called a "Join token"
-func Join(token, certStorage string, additionals map[string]func(name string, data string)) (*manager, error) {
+func Join(token, certStorage string, additionals map[string]func(name string, data string)) (*Manager, error) {
 
 	tokenStruct, err := parseToken(token)
 	if err != nil {
