@@ -201,7 +201,7 @@ func Join(token, certStorage string, additionalsHandlers map[string]func(name st
 
 	for name, data := range additionals {
 		if fnc, ok := m.additionalsHandlers[name]; ok {
-			go fnc(name, data)
+			fnc(name, data)
 		}
 	}
 
