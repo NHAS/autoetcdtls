@@ -27,7 +27,7 @@ func Join(token, certStorage string, additionalsHandlers map[string]func(name st
 		return nil, err
 	}
 
-	m, err := createEmptyManager(certStorage, tokenStruct.NewPeerURL)
+	m, err := createEmptyManager(certStorage, tokenStruct.NewManagerListenURL)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func Join(token, certStorage string, additionalsHandlers map[string]func(name st
 		}
 	}
 
-	httpsURL, err := url.Parse(tokenStruct.ExistingPeerURL)
+	httpsURL, err := url.Parse(tokenStruct.ExistingManagerURL)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func Join(token, certStorage string, additionalsHandlers map[string]func(name st
 
 	f.Close()
 
-	if err := createOrLoadCerts(m.storageDir, tokenStruct.NewPeerURL); err != nil {
+	if err := createOrLoadCerts(m.storageDir, tokenStruct.NewManagerListenURL); err != nil {
 		return nil, err
 	}
 

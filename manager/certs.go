@@ -9,6 +9,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"math/big"
+	"net"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -69,6 +70,18 @@ func generatePeer(path, domain string, caCert *x509.Certificate, caKey *rsa.Priv
 		return err
 	}
 
+	ips := []net.IP{}
+	if ip := net.ParseIP(domain); ip != nil {
+		ips = append(ips, ip)
+	} else {
+		addresses, err := net.LookupIP(domain)
+		if err != nil {
+			return err
+		}
+
+		ips = addresses
+	}
+
 	// set up our server certificate
 	cert := &x509.Certificate{
 		SerialNumber: n,
@@ -76,6 +89,7 @@ func generatePeer(path, domain string, caCert *x509.Certificate, caKey *rsa.Priv
 			CommonName: "Wag",
 		},
 		DNSNames:     []string{domain},
+		IPAddresses:  ips,
 		NotBefore:    time.Now(),
 		NotAfter:     time.Now().AddDate(30, 0, 0),
 		SubjectKeyId: []byte{1, 2, 3, 4, 6},

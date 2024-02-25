@@ -10,10 +10,10 @@ import (
 )
 
 type Token struct {
-	NewPeerURL      string `json:"d"`
-	ExistingPeerURL string `json:"peer"`
-	JoinPassword    string `json:"p"`
-	CACertHash      string `json:"h"`
+	NewManagerListenURL string `json:"d"`
+	ExistingManagerURL  string `json:"peer"`
+	JoinPassword        string `json:"p"`
+	CACertHash          string `json:"h"`
 }
 
 func parseToken(token string) (Token, error) {
@@ -41,13 +41,13 @@ func (m *Manager) isTokenValid(joinPassword string) bool {
 
 // CreateToken builds a new join token with temporary joining password from an existing and connected manager.
 // newNodeUrl is where the node will be accessible from (and where the instance will listen on when it starts its server component)
-func (m *Manager) CreateToken(newNodeUrl string) (*ActiveToken, error) {
+func (m *Manager) CreateToken(managerListenUrl string) (*ActiveToken, error) {
 	m.Lock()
 	defer m.Unlock()
 
 	var t Token
-	t.ExistingPeerURL = m.domain
-	t.NewPeerURL = newNodeUrl
+	t.ExistingManagerURL = m.domain
+	t.NewManagerListenURL = managerListenUrl
 	for {
 		t.JoinPassword = generateRandom(32)
 
