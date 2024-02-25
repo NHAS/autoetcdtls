@@ -9,6 +9,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"math/big"
+	"net/url"
 	"os"
 	"path/filepath"
 	"time"
@@ -167,7 +168,7 @@ func loadKey(path, key string) (*rsa.PrivateKey, error) {
 
 }
 
-func createOrLoadCerts(path, domain string) (err error) {
+func createOrLoadCerts(path, listenUrl string) (err error) {
 
 	if _, err := os.Stat(filepath.Join(path, PeerKeyFileName)); err == nil {
 
@@ -204,5 +205,14 @@ func createOrLoadCerts(path, domain string) (err error) {
 		return err
 	}
 
-	return generatePeer(path, domain, caCert, caKey)
+	u, err := url.Parse(listenUrl)
+	if err != nil {
+		return err
+	}
+
+	if u.Scheme != "https" {
+		return errors.New("unable to create certificate, invalid scheme provided")
+	}
+
+	return generatePeer(path, u.Hostname(), caCert, caKey)
 }

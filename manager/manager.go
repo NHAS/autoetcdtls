@@ -38,12 +38,12 @@ func (m *Manager) GetPeerKeyPath() string {
 // urlAddress is where the server listens to, and its publicly accessible address
 func New(certStore, urlAddress string) (*Manager, error) {
 
-	err := createOrLoadCerts(certStore, urlAddress)
+	m, err := createEmptyManager(certStore, urlAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	m, err := createEmptyManager(certStore, urlAddress)
+	err = createOrLoadCerts(certStore, urlAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func createEmptyManager(storageDir, urlAddress string) (*Manager, error) {
 	}
 
 	if u.Scheme != "https" {
-		return nil, errors.New("unsupported scheme for url: " + urlAddress)
+		return nil, errors.New("unsupported scheme for url, must be https://domain.something: " + urlAddress)
 	}
 
 	if u.Port() == "" {
